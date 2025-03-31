@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: builder
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - ETH_RPC_URL=http://ethereum:8545
+      - ETH_CHAIN_ID=1
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/defi_ide?schema=public
+    depends_on:
+      - ethereum
+      - postgres
+    command: npm run dev
+
+  ethereum:
+    image: ethereum/client-go:latest
+    ports:
+      - "8545:8545"
+    command: --dev --http --http.addr "0.0.0.0" --http.vhosts "*" --http.corsdomain "*" --http.api "eth,net,web3,personal,miner,admin,debug"
+    volumes:
+      - ethereum_data:/root/.ethereum
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=defi_ide
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  ethereum_data:
+  postgres_data: 
